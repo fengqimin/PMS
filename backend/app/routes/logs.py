@@ -32,7 +32,7 @@ def get_logs():
             return jsonify({
                 'code': 200,
                 'data': [log.to_dict() for log in logs],
-                # 'data': [],
+                'total': len(logs),
                 'message': 'success'
             })
             
@@ -71,6 +71,7 @@ def get_logs():
         return jsonify({
             'code': 200,
             'data': [log.to_dict() for log in logs],
+            'total': len(logs),
             'message': 'success'
         })
     except Exception as e:
@@ -80,4 +81,4 @@ def get_logs():
         }), 500
 
 if __name__=='__main__':
-    logs_bp.run(debug=True)
+    pass

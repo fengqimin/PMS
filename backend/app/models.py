@@ -14,7 +14,7 @@ class SystemLog(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     details = db.Column(db.Text, nullable=False)  # 详细信息
-    user = db.relationship('User', backref='logs')
+    user = db.relationship('User', backref='user_logs')
 
     def __repr__(self):
         return f'<SystemLog {self.id} {self.level}>'
@@ -36,7 +36,7 @@ class User(db.Model):
     password = db.Column(db.String(120), nullable=False)
     projects = db.relationship('Project', backref='owner', lazy=True)
     assigned_tasks = db.relationship('Task', backref='assignee', lazy=True)
-    logs = db.relationship('SystemLog', backref='user', lazy=True)
+    logs = db.relationship('SystemLog', backref='system_logs', lazy=True)
 
     def __repr__(self):
         return f'<User {self.username}>'
@@ -55,7 +55,7 @@ class Project(db.Model):
     start_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
     status = db.Column(db.String(20), default='pending')
-    tasks = db.relationship('Task', backref='project', lazy=True)
+    tasks = db.relationship('Task', backref='project_tasks', lazy=True)
 
     def __repr__(self):
         return f'<Project {self.name}>'
