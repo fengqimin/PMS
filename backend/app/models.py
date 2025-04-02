@@ -77,13 +77,16 @@ class Project(db.Model):
 
 class TaskComment(db.Model):
     """任务评论模型"""
+
     id = db.Column(db.Integer, primary_key=True)
     task_id = db.Column(db.Integer, db.ForeignKey("task.id"), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     content = db.Column(db.Text, nullable=False)  # 评论内容(支持富文本)
     mentioned_users = db.Column(db.String(255))  # 被@的用户ID列表，逗号分隔
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     def __repr__(self):
         return f"<TaskComment {self.id}>"
@@ -94,9 +97,11 @@ class TaskComment(db.Model):
             "task_id": self.task_id,
             "user_id": self.user_id,
             "content": self.content,
-            "mentioned_users": self.mentioned_users.split(",") if self.mentioned_users else [],
+            "mentioned_users": (
+                self.mentioned_users.split(",") if self.mentioned_users else []
+            ),
             "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
 
@@ -314,7 +319,10 @@ class AuditLog(db.Model):
     user_id = db.Column(
         db.Integer, db.ForeignKey("user.id"), nullable=False
     )  # 操作用户
-    action = db.Column(db.String(50), nullable=False)  # 操作类型
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("project.id"), nullable=True
+    )  # 关联项目ID
+    action_type = db.Column(db.String(50), nullable=False)  # 操作类型
     resource_type = db.Column(db.String(50))  # 资源类型
     resource_id = db.Column(db.Integer)  # 资源ID
     details = db.Column(db.JSON)  # 操作详情
@@ -329,7 +337,7 @@ class AuditLog(db.Model):
         return {
             "id": self.id,
             "user_id": self.user_id,
-            "action": self.action,
+            "action_type": self.action_type,
             "resource_type": self.resource_type,
             "resource_id": self.resource_id,
             "details": self.details,
@@ -338,25 +346,7 @@ class AuditLog(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
-    def __repr__(self):
-        return f"<ProjectRisk {self.title}>"
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "project_id": self.project_id,
-            "title": self.title,
-            "description": self.description,
-            "probability": self.probability,
-            "impact": self.impact,
-            "status": self.status,
-            "solution": self.solution,
-            "created_by": self.created_by,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
-        }
-
-
+ 
 class ProjectMilestone(db.Model):
     """项目里程碑模型，用于跟踪项目关键里程碑"""
 

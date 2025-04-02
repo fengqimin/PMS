@@ -59,7 +59,6 @@ def register():
         db.session.add(log)
         db.session.commit()
         return jsonify({"error": "Username already exists"}), 400
-
     user = User(username=username, password=generate_password_hash(password))
     db.session.add(user)
     db.session.commit()
@@ -70,19 +69,19 @@ def register():
 @bp.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
-    username = data.get("username")
+    user_name = data.get("username")
     password = data.get("password")
     ip_address = request.remote_addr
 
-    user = User.query.filter_by(username=username).first()
-
+    user = db.session.query(User).filter_by(username=user_name).first()
+    print(f"user: {user.username}, {user.password}, {check_password_hash(user.password, password)}")
     if not user or not check_password_hash(user.password, password):
         # 记录失败的登录尝试
         log = SystemLog(
             level="warning",
             action_type="login_failed",
             user_id=user.id if user else None,
-            details=f"Failed login attempt for username: {username} from IP: {ip_address}",
+            details=f"Failed login attempt for username: {user_name} from IP: {ip_address}",
         )
         db.session.add(log)
         db.session.commit()
@@ -93,10 +92,10 @@ def login():
         level="info",
         action_type="login_success",
         user_id=user.id,
-        details=f"User {username} logged in from IP: {ip_address}",
+        details=f"User {user_name} logged in from IP: {ip_address}",
     )
     db.session.add(log)
     db.session.commit()
 
-    access_token = create_access_token(identity=username)
+    access_token = create_access_token(identity=user_name)
     return jsonify({"access_token": access_token}), 200
