@@ -20,17 +20,22 @@ def admin_required():
 
     def wrapper(fn):
         @wraps(fn)
+        @jwt_required()
         def decorated_function(*args, **kwargs):
             try:
-                if not get_jwt().get("is_admin", False):
+                # 获取当前用户的身份信息
+                identity = get_jwt_identity()
+                # 检查用户是否为管理员，如果不是则返回错误响应或重定向到登录页面等
+                user = User.query.filter_by(username=identity).first()
+                if not user or not user.is_admin:
                     return (
                         jsonify({"code": 403, "message": "Admin permission required"}),
                         403,
                     )
-                return jwt_required()(fn)(*args, **kwargs)
+                return fn(*args, **kwargs)
             except Exception as e:
                 return (
-                    jsonify({"code": 401, "message": "Invalid or expired token"}),
+                    jsonify({"code": 401, "message": str(e)}),
                     401,
                 )
 
@@ -74,7 +79,7 @@ def login():
     ip_address = request.remote_addr
 
     user = db.session.query(User).filter_by(username=user_name).first()
-    print(f"user: {user.username}, {user.password}, {check_password_hash(user.password, password)}")
+
     if not user or not check_password_hash(user.password, password):
         # 记录失败的登录尝试
         log = SystemLog(

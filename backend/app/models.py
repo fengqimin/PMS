@@ -331,7 +331,7 @@ class AuditLog(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)  # 创建时间
 
     def __repr__(self):
-        return f"<AuditLog {self.action}>"
+        return f"<AuditLog {self.action_type}>"
 
     def to_dict(self):
         return {
@@ -346,7 +346,7 @@ class AuditLog(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
- 
+
 class ProjectMilestone(db.Model):
     """项目里程碑模型，用于跟踪项目关键里程碑"""
 

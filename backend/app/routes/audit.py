@@ -1,8 +1,9 @@
 from flask import Blueprint, request, jsonify
-from app.models import db, AuditLog
+from app.models import db, AuditLog, User
 from auth import jwt_required, admin_required
-from datetime import datetime
+import logging
 
+logger = logging.getLogger(__name__)
 bp = Blueprint("audit", __name__, url_prefix="/api/v1/audit")
 
 
@@ -37,9 +38,10 @@ def get_user_audit_logs(user_id):
     """
     获取指定用户的审计日志(仅自己或管理员)
     """
-    if request.args.get("user_id") != user_id and not request.args.get("is_admin"):
+    user = db.session.query(User).filter_by(id=user_id).first()
+    if not user:
         return jsonify({"code": 403, "message": "无权访问"}), 403
-
+    
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 20, type=int)
     logs = (
