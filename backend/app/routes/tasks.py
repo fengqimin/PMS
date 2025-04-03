@@ -146,7 +146,10 @@ def update_task_status(task_id):
     """
     data = request.get_json()
     try:
-        task = Task.query.get_or_404(task_id)
+        # task = Task.query.get_or_404(task_id)
+        task = db.session.get(Task, task_id)
+        if not task:
+            return jsonify({"code": 404, "message": "Task not found"}), 404
         if data["status"] not in ["todo", "doing", "done"]:
             return jsonify({"code": 400, "message": "Invalid status"}), 400
         task.status = data["status"]
@@ -166,7 +169,10 @@ def get_task(task_id):
     根据ID获取任务详情
     """
     try:
-        task = Task.query.get_or_404(task_id)
+        # task = Task.query.get_or_404(task_id)
+        task = db.session.get(Task, task_id)
+        if not task:
+            return jsonify({"code": 404, "message": "Task not found"}), 404
         return jsonify({"code": 200, "data": task.to_dict(), "message": "success"})
     except Exception as e:
         if '404 Not Found' in str(e):
@@ -182,7 +188,10 @@ def assign_task(task_id):
     """
     data = request.get_json()
     try:
-        task = Task.query.get_or_404(task_id)
+        # task = Task.query.get_or_404(task_id)
+        task = db.session.get(Task, task_id)
+        if not task:
+            return jsonify({"code": 404, "message": "Task not found"}), 404
         task.assignee_id = data["assignee_id"]
         db.session.commit()
         return jsonify({"code": 200, "data": task.to_dict(), "message": "success"})

@@ -31,6 +31,12 @@ class SystemLog(db.Model):
         return f"<SystemLog {self.id} {self.level}>"
 
     def to_dict(self):
+        """
+        将系统日志对象转换为字典形式。
+
+        返回:
+            dict: 包含系统日志对象属性的字典。
+        """
         return {
             "id": self.id,
             "level": self.level,
@@ -42,6 +48,12 @@ class SystemLog(db.Model):
 
 
 class User(db.Model):
+    """
+    用户模型
+    用于存储系统中的用户信息，包括用户名、密码、是否为管理员等。
+    关联了用户创建的项目、分配的任务和系统日志。
+    """
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
@@ -51,9 +63,21 @@ class User(db.Model):
     logs = db.relationship("SystemLog", back_populates="user", lazy=True)
 
     def __repr__(self):
+        """
+        返回一个字符串，用于表示该用户对象。
+
+        返回:
+            str: 包含用户用户名的字符串。
+        """
         return f"<User {self.username}>"
 
     def to_dict(self):
+        """
+        将用户对象转换为字典形式。
+
+        返回:
+            dict: 包含用户对象属性的字典。
+        """
         return {"id": self.id, "username": self.username, "is_admin": self.is_admin}
 
 
@@ -65,6 +89,7 @@ class Project(db.Model):
     start_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
     status = db.Column(db.String(20), default="pending")
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     tasks = db.relationship("Task", backref="project_tasks", lazy=True)
 
     def __repr__(self):
@@ -79,6 +104,7 @@ class Project(db.Model):
             "start_date": self.start_date.isoformat() if self.start_date else None,
             "end_date": self.end_date.isoformat() if self.end_date else None,
             "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
 
