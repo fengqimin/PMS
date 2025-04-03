@@ -1,5 +1,10 @@
+"""
+模型定义文件
+
+"""
+
+from datetime import datetime, timezone
 from app import db
-from datetime import datetime
 
 
 class SystemLog(db.Model):
@@ -15,8 +20,10 @@ class SystemLog(db.Model):
     action_type = db.Column(db.String(50), nullable=False)  # 操作类型
     user_id = db.Column(
         db.Integer, db.ForeignKey("user.id"), nullable=True
-    )  # 用户ID，可以为空值，主要是记录错误的用户登录日志
-    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    )  # 用户ID，可以为空值，用来记录错误的用户登录日志
+    timestamp = db.Column(
+        db.DateTime, nullable=False, default=datetime.now(timezone.utc)
+    )
     details = db.Column(db.Text, nullable=False)  # 详细信息
     user = db.relationship("User", back_populates="logs")  # 关联到 User 模型
 
@@ -75,36 +82,6 @@ class Project(db.Model):
         }
 
 
-class TaskComment(db.Model):
-    """任务评论模型"""
-
-    id = db.Column(db.Integer, primary_key=True)
-    task_id = db.Column(db.Integer, db.ForeignKey("task.id"), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    content = db.Column(db.Text, nullable=False)  # 评论内容(支持富文本)
-    mentioned_users = db.Column(db.String(255))  # 被@的用户ID列表，逗号分隔
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
-
-    def __repr__(self):
-        return f"<TaskComment {self.id}>"
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "task_id": self.task_id,
-            "user_id": self.user_id,
-            "content": self.content,
-            "mentioned_users": (
-                self.mentioned_users.split(",") if self.mentioned_users else []
-            ),
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
-        }
-
-
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=False)
@@ -132,6 +109,38 @@ class Task(db.Model):
             "status": self.status,
             "priority": self.priority,
             "due_date": self.due_date.isoformat() if self.due_date else None,
+        }
+
+
+class TaskComment(db.Model):
+    """任务评论模型"""
+
+    id = db.Column(db.Integer, primary_key=True)
+    task_id = db.Column(db.Integer, db.ForeignKey("task.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    content = db.Column(db.Text, nullable=False)  # 评论内容(支持富文本)
+    mentioned_users = db.Column(db.String(255))  # 被@的用户ID列表，逗号分隔
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.now(timezone.utc),
+        onupdate=datetime.now(timezone.utc),
+    )
+
+    def __repr__(self):
+        return f"<TaskComment {self.id}>"
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "task_id": self.task_id,
+            "user_id": self.user_id,
+            "content": self.content,
+            "mentioned_users": (
+                self.mentioned_users.split(",") if self.mentioned_users else []
+            ),
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
 
@@ -184,7 +193,8 @@ class ProjectPerformance(db.Model):
     actual_cost = db.Column(db.Float)
     completion_rate = db.Column(db.Float, default=0)
     remark = db.Column(db.Text, default="")
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # Bug修复：将弃用的 datetime.utcnow 替换为 datetime.now(timezone.utc)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     def __repr__(self):
         return f"<ProjectPerformance {self.kpi}>"
@@ -208,7 +218,7 @@ class ProjectArchive(db.Model):
     archived_by = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     reason = db.Column(db.Text, default="")
     status = db.Column(db.String(20), default="archived")
-    archived_at = db.Column(db.DateTime, default=datetime.utcnow)
+    archived_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     def __repr__(self):
         return f"<ProjectArchive {self.project_id}>"
@@ -236,7 +246,9 @@ class ProjectProgress(db.Model):
     actual_end = db.Column(db.DateTime)  # 实际结束时间
     completion_rate = db.Column(db.Float, default=0)  # 完成百分比(0-100)
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        db.DateTime,
+        default=datetime.now(timezone.utc),
+        onupdate=datetime.now(timezone.utc),
     )
 
     def __repr__(self):
@@ -276,9 +288,11 @@ class ProjectRisk(db.Model):
     created_by = db.Column(
         db.Integer, db.ForeignKey("user.id"), nullable=False
     )  # 创建人
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)  # 创建时间
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))  # 创建时间
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        db.DateTime,
+        default=datetime.now(timezone.utc),
+        onupdate=datetime.now(timezone.utc),
     )  # 更新时间
 
 
@@ -294,7 +308,7 @@ class ChangeRecord(db.Model):
     created_by = db.Column(
         db.Integer, db.ForeignKey("user.id"), nullable=False
     )  # 创建人
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)  # 创建时间
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))  # 创建时间
 
     def __repr__(self):
         return f"<ChangeRecord {self.change_type}>"
@@ -328,7 +342,7 @@ class AuditLog(db.Model):
     details = db.Column(db.JSON)  # 操作详情
     ip_address = db.Column(db.String(50))  # IP地址
     user_agent = db.Column(db.String(200))  # 用户代理
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)  # 创建时间
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))  # 创建时间
 
     def __repr__(self):
         return f"<AuditLog {self.action_type}>"
@@ -359,9 +373,11 @@ class ProjectMilestone(db.Model):
     status = db.Column(
         db.String(20), default="pending"
     )  # 状态(pending/completed/delayed)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)  # 创建时间
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))  # 创建时间
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        db.DateTime,
+        default=datetime.now(timezone.utc),
+        onupdate=datetime.now(timezone.utc),
     )  # 更新时间
 
     def __repr__(self):
@@ -388,7 +404,9 @@ class SystemConfig(db.Model):
     key = db.Column(db.String(50), unique=True, nullable=False)
     value = db.Column(db.JSON, nullable=False)
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        db.DateTime,
+        default=datetime.now(timezone.utc),
+        onupdate=datetime.now(timezone.utc),
     )
 
     def __repr__(self):
@@ -414,9 +432,11 @@ class ProjectMember(db.Model):
         db.Integer, db.ForeignKey("user.id"), nullable=False
     )  # 关联用户ID
     role = db.Column(db.String(20), nullable=False)  # 成员角色(admin/member/guest)
-    joined_at = db.Column(db.DateTime, default=datetime.utcnow)  # 加入时间
+    joined_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))  # 加入时间
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        db.DateTime,
+        default=datetime.now(timezone.utc),
+        onupdate=datetime.now(timezone.utc),
     )  # 更新时间
 
     def __repr__(self):
@@ -448,9 +468,11 @@ class ProjectDocument(db.Model):
     uploaded_by = db.Column(
         db.Integer, db.ForeignKey("user.id"), nullable=False
     )  # 上传人
-    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)  # 上传时间
+    uploaded_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))  # 上传时间
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        db.DateTime,
+        default=datetime.now(timezone.utc),
+        onupdate=datetime.now(timezone.utc),
     )  # 更新时间
 
     def __repr__(self):
